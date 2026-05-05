@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wisdom's Sentiment Dashboard</title>
+    <style>
+        /* Sleek Modern Black and Gold Theme */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Deep charcoal background gradient */
+            background: linear-gradient(135deg, #000000, #1a1a1a, #262626);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Container with minimal glow */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(197, 160, 89, 0.2); /* Subtle Gold border */
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        /* Updated Main Title with Pale Gold color */
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #F1C40F; /* Pale Gold */
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(197, 160, 89, 0.3); /* Subtle Gold border */
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        /* Gold glow on focus */
+        textarea:focus {
+            border-color: #C5A059; /* Metallic Gold */
+            box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
+        }
+
+        /* Gold Gradient Button */
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+            /* Multi-stop Gold/Brass gradient for a premium look */
+            background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            background-size: 200% auto;
+            color: #000; /* Black text on gold for readability */
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.5s ease;
+        }
+
+        /* Shine effect on hover */
+        button:hover {
+            background-position: right center; /* Shifts gradient */
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(197, 160, 89, 0.5);
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        /* The History Log Section */
+        .history-section {
+            margin-top: 40px;
+            border-top: 1px solid rgba(197, 160, 89, 0.2); /* Subtle Gold border */
+            padding-top: 20px;
+        }
+
+        .history-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        /* Keep Green/Red for actual results as they represent emotion better than gold/black */
+        .pos { color: #00FF87; text-shadow: 0 0 5px rgba(0, 255, 135, 0.3); } /* Neon Green */
+        .neg { color: #FF416C; text-shadow: 0 0 5px rgba(255, 65, 108, 0.3); } /* Neon Red */
+        
+        /* Gold warning text */
+        .warning { color: #F1C40F; }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel">
+        <!-- New Requirement Title -->
+        <h2>Wisdom's Sentiment Analysis Project</h2>
+        
+        <!-- Updated Requirement Placeholder -->
+        <textarea id="userInput" placeholder="Type something, let's see how you are feeling"></textarea>
+        
+        <button id="analyzeBtn" onclick="analyzeText()">Initialize Neural Analysis</button>
+        <div id="result"></div>
+
+        <div class="history-section" id="historyContainer" style="display: none;">
+            <h4 style="margin-bottom: 10px; color: #888; letter-spacing: 1px;">Live Analysis Stream</h4>
+            <div id="historyLog"></div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeText() {
+            const textInput = document.getElementById('userInput');
+            const text = textInput.value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('analyzeBtn');
+            const historyContainer = document.getElementById('historyContainer');
+            const historyLog = document.getElementById('historyLog');
+            
+            if (!text) {
+                resultDiv.innerHTML = "⚠️ Provide input data stream.";
+                resultDiv.className = "warning";
+                return;
+            }
+
+            // UI Loading State
+            btn.innerText = "Analyzing Neural States...";
+            resultDiv.innerHTML = "";
+
+            try {
+                // Network request to local Flask server
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    mode: 'cors', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const sentiment = data.sentiment;
+                const isPositive = sentiment.includes("Positive");
+
+                // Display main result
+                resultDiv.innerHTML = sentiment;
+                resultDiv.className = isPositive ? "pos" : "neg";
+
+                // History Log logic
+                historyContainer.style.display = "block";
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Truncate text if it's too long
+                const shortText = text.length > 40 ? text.substring(0, 40) + "..." : text;
+                
+                historyItem.innerHTML = `
+                    <span style="color: #aaa;">"${shortText}"</span>
+                    <span class="${isPositive ? 'pos' : 'neg'}">${sentiment}</span>
+                `;
+                
+                // Add to the top
+                historyLog.insertBefore(historyItem, historyLog.firstChild);
+                
+                // Clear the input box
+                textInput.value = "";
+
+            } catch (error) {
+                console.error("Fetch Error: ", error);
+                resultDiv.innerHTML = "⚠️ Server offline. Check Python Terminal.";
+                resultDiv.className = "neg";
+            } finally {
+                // Reset button text
+                btn.innerText = "Initialize Neural Analysis";
+            }
+        }
+    </script>
+</body>
+</html>
